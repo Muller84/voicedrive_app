@@ -1,0 +1,50 @@
+name: voicedrive_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Práce se zvukem a HW
+  record: ^5.1.0
+  speech_to_text: ^7.3.0
+  path_provider: ^2.1.2
+  audioplayers: ^6.1.0
+
+  # Databáze a State Management
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  firebase_core: ^2.24.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  
+  # Nástroje pro generování kódu a ikon
+  flutter_launcher_icons: ^0.13.1
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.8
+
+# Konfigurace pro generování ikon (musí být na začátku řádku, neodsazené)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+  image_path: "assets/icon/icon.png"
+
+flutter:
+  uses-material-design: true
+
+  # Assets patří SEM, pod hlavní sekci flutter
+  assets:
+    - assets/icon/icon.png
