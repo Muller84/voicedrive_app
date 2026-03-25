@@ -1,16 +1,35 @@
-# voicedrive_app
+📱 VoiceDrive
+VoiceDrive is a Flutter prototype app designed to let drivers quickly record voice notes while staying focused on the road.
+The app records audio, converts speech to text, and stores notes locally with a simple adaptive UI for both mobile phones and in‑car smart screens.
 
-A new Flutter project.
+🚀 Features:
+🎙️ Audio recording (start/stop)
+🗣️ Speech‑to‑text
+📝 Create, view and delete notes
+📱 Adaptive UI for phone and car display
+💾 Local storage (Hive)
 
-## Getting Started
+🧩 Tech Stack
+Flutter
+record – audio recording
+speech_to_text – speech recognition
+path_provider – file system access
+hive – local database
 
-This project is a starting point for a Flutter application.
+🧪 Test Summary
+All core features tested and passing:
+Recording
+Stopping & saving audio
+Speech‑to‑text
+Saving notes
+Deleting notes
+Adaptive layout
 
-A few resources to get you started if this is your first Flutter project:
+▶️ Run the App
+flutter pub get
+flutter run
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+If platform folders are missing:
+flutter create .
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
