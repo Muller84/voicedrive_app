@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+// Added during feature/recording development
 // Tento řádek bude červený, dokud build_runner neskončí úspěšně
 part 'recording.g.dart';
 
