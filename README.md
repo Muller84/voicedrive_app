@@ -44,7 +44,7 @@ All core features tested and passing:
 flutter pub get
 flutter run
 ```
-## If platform folders are missing:
+### If platform folders are missing:
 ```bash
 flutter create .
 
