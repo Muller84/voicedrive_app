@@ -1,9 +1,7 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'recording.dart';
 
 // **************************************************************************
-// TypeAdapterGenerator
+// TypeAdapterGenerator, automatically generated translator for object and database Hive.
 // **************************************************************************
 
 class RecordingAdapter extends TypeAdapter<Recording> {
@@ -11,6 +9,8 @@ class RecordingAdapter extends TypeAdapter<Recording> {
   final int typeId = 0;
 
   @override
+  // Read binary data from Hive folder and convert it to a Recording object, using map fields.
+  // Nacteni Recording z Hive. V Hive se data ukladaji v binarni podobe, tento kod je prevede zpet do objektu.
   Recording read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
@@ -27,6 +27,8 @@ class RecordingAdapter extends TypeAdapter<Recording> {
   }
 
   @override
+  // Take a Recording object and write his values to Hive database in binary format.
+  // Ulozeni Recording do Hive. V Hive se data ukladaji v binarni podobe, tento kod prevede objekt do binarni podoby.
   void write(BinaryWriter writer, Recording obj) {
     writer
       ..writeByte(6)
@@ -45,6 +47,8 @@ class RecordingAdapter extends TypeAdapter<Recording> {
   }
 
   @override
+  // Identify the type in Hive database, has to be unique for each class.
+  // hashCode enables Hive to compare adapters.
   int get hashCode => typeId.hashCode;
 
   @override

@@ -33,6 +33,19 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Flutter platform folders (safe to regenerate)
+windows/
+linux/
+macos/
+web/
+
+ios/Flutter/
+ios/.generated/
+android/app/src/debug/
+android/app/src/profile/
+android/app/src/release/
+
+
 # Symbolication related
 app.*.symbols
 
