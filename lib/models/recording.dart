@@ -1,9 +1,12 @@
 import 'package:hive/hive.dart';
 
-// Added during feature/recording development
-// řádek bude červený, dokud build_runner neskončí úspěšně!
+// Define object Recording (rikam Hive "Takhle vypada Recording.")
+
+// Connect model with adapter. If not build_runner will be red.
 part 'recording.g.dart';
 
+// This object has type ID 0, use for them RecordingAdapter.
+// key 0, value id
 @HiveType(typeId: 0)
 class Recording extends HiveObject {
   @HiveField(0)
