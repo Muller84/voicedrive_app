@@ -1,27 +1,44 @@
-import 'package:flutter/material.dart'; // material design package for building the UI
+import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/home_screen.dart';
+import 'models/recording.dart';
 
-// Start app, flutter spusti widget VoiceDriveApp, which is the root of the application.
-void main() {
+void main() async {
+  // 1. Musí být první, aby Flutter mohl inicializovat pluginy (mikrofon, úložiště)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inicializace Hive pro Flutter
+  await Hive.initFlutter();
+
+  // 3. Registrace automaticky generovaného adaptéru
+  // ID typu v adaptéru musí odpovídat @HiveType(typeId: 0)
+  Hive.registerAdapter(RecordingAdapter());
+
+  // 4. Otevření boxu pro ukládání nahrávek
+  // <Recording> říká Hive, že v tomto boxu budou jen me objekty
+  await Hive.openBox<Recording>('recordings');
+
+  // 5. Spuštění aplikace
   runApp(const VoiceDriveApp());
 }
 
-// VoiceDriveApp nemeni stav (pro konfiguraci, theme, routing)
 class VoiceDriveApp extends StatelessWidget {
   const VoiceDriveApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // hlavni kontejner app (obsahuje theme, navigation, home screen)
     return MaterialApp(
       title: 'VoiceDrive',
-      debugShowCheckedModeBanner: false, // skryje debug banner v rohu
-      // definuje barvy a styl app
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true, // pouziti Material Design 3 (novy design system)
+        // Nastavení tmavého režimu, aby ladilo s dashboardem
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
       ),
-      // po spusteni app se zobrazi HomeScreen widget
       home: const HomeScreen(),
     );
   }
