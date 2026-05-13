@@ -1,35 +1,54 @@
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart'
-    show
-        kIsWeb; // This import for checking if the app is running on Web or Mobile
+import 'package:flutter/foundation.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class AudioService {
   final AudioRecorder _audioRecorder = AudioRecorder();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  Future<void> playRecording(String filePath) async {
+    try {
+      // Source může být DeviceFile, protože nahrávka je uložená v telefonu
+      await _audioPlayer.play(DeviceFileSource(filePath));
+    } catch (e) {
+      print("Chyba při přehrávání: $e");
+    }
+  }
 
   Future<void> startRecording() async {
     try {
-      if (await _audioRecorder.hasPermission()) {
-        String filePath = '';
+      debugPrint("Kontrola oprávnění...");
+      final hasPermission = await _audioRecorder.hasPermission();
 
-        if (!kIsWeb) {
-          // Code for mobile.
-          final directory = await getApplicationDocumentsDirectory();
-          filePath =
-              '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        } else {
-          // Code for Web: Leave path empty, Chrome will create a Blob URL
-          filePath = '';
-          print("Running on Web - path is handled by browser");
+      if (hasPermission) {
+        // Kontrola, jestli už nenahrávám
+        if (await _audioRecorder.isRecording()) {
+          debugPrint("Nahrávání už běží, zastavuji staré...");
+          await _audioRecorder.stop();
         }
 
-        const config = RecordConfig();
-        await _audioRecorder.start(config, path: filePath);
+        String filePath = '';
+        if (!kIsWeb) {
+          final directory = await getApplicationDocumentsDirectory();
+          filePath =
+              '${directory.path}/rec_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        }
 
-        print("Recording started. Path target: $filePath");
+        const config = RecordConfig(
+          encoder: AudioEncoder.aacLc, // Explicitně nastavím enkodér
+          bitRate: 128000,
+          sampleRate: 44100,
+        );
+
+        debugPrint("Startuji rekordér do cesty: $filePath");
+        await _audioRecorder.start(config, path: filePath);
+        debugPrint("Rekordér úspěšně spuštěn.");
+      } else {
+        debugPrint("Uživatel zamítl přístup k mikrofonu.");
       }
     } catch (e) {
-      print("Error starting record: $e");
+      debugPrint("KRITICKÁ CHYBA při startu: $e");
     }
   }
 
@@ -44,5 +63,8 @@ class AudioService {
     }
   }
 
-  void dispose() => _audioRecorder.dispose();
+  void dispose() {
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
+  }
 }
