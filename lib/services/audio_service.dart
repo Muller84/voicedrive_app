@@ -36,9 +36,10 @@ class AudioService {
         }
 
         const config = RecordConfig(
-          encoder: AudioEncoder.aacLc, // Explicitně nastavím enkodér
-          bitRate: 128000,
-          sampleRate: 44100,
+          encoder: AudioEncoder.aacLc,
+          bitRate: 64000,
+          sampleRate: 16000,
+          numChannels: 1,
         );
 
         debugPrint("Startuji rekordér do cesty: $filePath");

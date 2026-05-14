@@ -426,15 +426,20 @@ class _HomeScreenState extends State<HomeScreen> {
               _transcriptionText = "Tap the mic to start recording";
             });
           } else {
-            // Start nahravani
-            await _audioService.startRecording();
+            // 1. Nastavím stav
             setState(() {
               _isRecording = true;
               _transcriptionText = "";
             });
 
+            // 2. Nastartuji rekordér jako PRVNÍ
+            await _audioService.startRecording();
+
+            // 3. Počkám celou SEKUNDU
+            await Future.delayed(const Duration(seconds: 1));
+
+            // 4. Pak teprve pustím Speech Service
             await _speechService.startListening((resultText) {
-              // POJISTKA: text v poli aktualizuji jen pokud nahravani stale bezi
               if (_isRecording) {
                 setState(() {
                   _transcriptionText = resultText;
