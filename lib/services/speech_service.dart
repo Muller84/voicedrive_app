@@ -1,58 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter/foundation.dart';
 
 class SpeechService {
-  // Variables
   final SpeechToText _speech = SpeechToText();
   bool _isAvailable = false;
 
-  // Initialise the Speech-to-Text engine
   Future<bool> initSpeech() async {
-    _isAvailable = await _speech.initialize(
-      onError: (val) => print('Speech Error: $val'),
-      onStatus: (val) => print('Speech Status: $val'),
-    );
+    try {
+      _isAvailable = await _speech.initialize(
+        onError: (val) => debugPrint(
+          '### STT ERROR: ${val.errorMsg} | permanent: ${val.permanent}',
+        ),
+        onStatus: (val) => debugPrint('### STT STATUS: $val'),
+        debugLogging: true, // ← přidej toto!
+      );
+
+      debugPrint('### STT AVAILABLE: $_isAvailable');
+
+      if (_isAvailable) {
+        final locales = await _speech.locales();
+        debugPrint('### STT LOCALES COUNT: ${locales.length}');
+      }
+    } catch (e) {
+      debugPrint('### STT INIT EXCEPTION: $e');
+    }
+
     return _isAvailable;
   }
 
-  // Determine the best locale based on system language, with fallback to en_GB
   Future<String> _getBestLocale() async {
     final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
     final locales = await _speech.locales();
 
-    // Find the first locale that matches the system language code (cs, en, etc.)
+    debugPrint('System locale: ${systemLocale.languageCode}');
+    debugPrint(
+      'Available STT locales: ${locales.map((l) => l.localeId).toList()}',
+    );
+
+    // Normalizace: porovnáváme jen language code (cs, en...)
+    // a ignorujeme podtržítko vs pomlčka rozdíly
+    final langCode = systemLocale.languageCode.toLowerCase();
+
     var match = locales.where(
-      (l) => l.localeId.startsWith(systemLocale.languageCode),
+      (l) => l.localeId.toLowerCase().replaceAll('-', '_').startsWith(langCode),
     );
 
     final selected = match.isNotEmpty ? match.first.localeId : 'en_GB';
-
-    print("Using STT locale: $selected");
+    debugPrint('Using STT locale: $selected');
     return selected;
   }
 
-  // Start listening for speech input
   Future<void> startListening(
     Function(String) onResult, {
     String? localeId,
   }) async {
-    if (!_isAvailable) return;
+    if (!_isAvailable) {
+      debugPrint('STT not available, trying re-init...');
+      await initSpeech();
+      if (!_isAvailable) return;
+    }
 
-    // If no locale is provided, use automatic selection or fallback
+    // Zastav případné předchozí naslouchání
+    if (_speech.isListening) {
+      await _speech.stop();
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
     final finalLocale = localeId ?? await _getBestLocale();
 
-    _speech.listen(
-      onResult: (val) => onResult(val.recognizedWords),
-      localeId: finalLocale, // Použijeme ten vybraný
+    await _speech.listen(
+      onResult: (val) {
+        debugPrint(
+          'Recognized: ${val.recognizedWords} (final: ${val.finalResult})',
+        );
+        onResult(val.recognizedWords);
+      },
+      localeId: finalLocale,
       listenOptions: SpeechListenOptions(
         partialResults: true,
-        listenMode: ListenMode.dictation,
+        // dictation nefunguje spolehlivě na Androidu
+        // Použiji confirmation nebo deviceDefault
+        listenMode: kIsWeb ? ListenMode.dictation : ListenMode.confirmation,
+        cancelOnError: true,
+        autoPunctuation: true,
       ),
     );
   }
 
-  // Stop listening
   Future<void> stopListening() async {
     await _speech.stop();
   }
+
+  bool get isListening => _speech.isListening;
+  bool get isAvailable => _isAvailable;
 }
