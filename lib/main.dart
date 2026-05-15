@@ -4,21 +4,21 @@ import 'screens/home_screen.dart';
 import 'models/recording.dart';
 
 void main() async {
-  // 1. Musí být první, aby Flutter mohl inicializovat pluginy (mikrofon, úložiště)
+  // 1. Must be called first to allow Flutter to initialise plugins (microphone, storage)
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Inicializace Hive pro Flutter
+  // 2. Initialise Hive for Flutter
   await Hive.initFlutter();
 
-  // 3. Registrace automaticky generovaného adaptéru
-  // ID typu v adaptéru musí odpovídat @HiveType(typeId: 0)
+  // 3. Register the automatically generated adapter
+  // The typeId must match @HiveType(typeId: 0)
   Hive.registerAdapter(RecordingAdapter());
 
-  // 4. Otevření boxu pro ukládání nahrávek
-  // <Recording> říká Hive, že v tomto boxu budou jen me objekty
+  // 4. Open the Hive box for storing recordings
+  // <Recording> ensures that only Recording objects are stored
   await Hive.openBox<Recording>('recordings');
 
-  // 5. Spuštění aplikace
+  // 5. Launch the application
   runApp(const VoiceDriveApp());
 }
 
@@ -31,7 +31,7 @@ class VoiceDriveApp extends StatelessWidget {
       title: 'VoiceDrive',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Nastavení tmavého režimu, aby ladilo s dashboardem
+        // Setting dark mode to match my dashboard
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blueAccent,

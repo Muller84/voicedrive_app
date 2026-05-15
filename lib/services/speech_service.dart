@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 class SpeechService {
+  // Variables
   final SpeechToText _speech = SpeechToText();
   bool _isAvailable = false;
 
-  // Inicializace STT
+  // Initialise the Speech-to-Text engine
   Future<bool> initSpeech() async {
     _isAvailable = await _speech.initialize(
       onError: (val) => print('Speech Error: $val'),
@@ -14,12 +15,12 @@ class SpeechService {
     return _isAvailable;
   }
 
-  // Získání nejlepšího jazyka podle systému + fallback na en_GB
+  // Determine the best locale based on system language, with fallback to en_GB
   Future<String> _getBestLocale() async {
     final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
     final locales = await _speech.locales();
 
-    // Najdi první locale, které začíná stejným jazykovým kódem (cs, en, atd.)
+    // Find the first locale that matches the system language code (cs, en, etc.)
     var match = locales.where(
       (l) => l.localeId.startsWith(systemLocale.languageCode),
     );
@@ -30,15 +31,14 @@ class SpeechService {
     return selected;
   }
 
-  // Spuštění naslouchání
-  // V speech_service.dart
+  // Start listening for speech input
   Future<void> startListening(
     Function(String) onResult, {
     String? localeId,
   }) async {
     if (!_isAvailable) return;
 
-    // Pokud localeId nepřijde, použije se automatika nebo fallback
+    // If no locale is provided, use automatic selection or fallback
     final finalLocale = localeId ?? await _getBestLocale();
 
     _speech.listen(
@@ -51,7 +51,7 @@ class SpeechService {
     );
   }
 
-  // Zastavení naslouchání
+  // Stop listening
   Future<void> stopListening() async {
     await _speech.stop();
   }

@@ -1,22 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
 
-// Definuji prázdnou třídu, aby kód šel spustit, ale nefungoval
+// Temporary placeholder implementation used during TDD
 class SpeechService {
   Future<String> convertAudioToText(String path) async {
-    // v TDD začínu tím, že funkce nevrací to, co chci
+    // Initial implementation intentionally returns empty output
     return "";
   }
 }
 
 void main() {
-  test('TDD: Převod audia na text by měl vrátit rozpoznaná slova', () async {
-    final service = SpeechService();
+  test(
+    'TDD: Audio-to-text conversion should return recognised words',
+    () async {
+      final service = SpeechService();
 
-    // Simuluji volání s cestou k souboru
-    final result = await service.convertAudioToText('test_audio.wav');
+      // Simulated audio input
+      final result = await service.convertAudioToText('test_audio.wav');
 
-    // Očekávám, že se vrátí "Ahoj", ale funkce vrátí prázdný text
-    // TENTO TEST SCHVÁLNĚ SELŽE
-    expect(result, "Ahoj");
-  });
+      // Expected transcription output
+      // This test intentionally fails during the Red phase of TDD
+      expect(result, "Hello");
+    },
+  );
 }
