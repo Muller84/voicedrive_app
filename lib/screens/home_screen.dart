@@ -326,8 +326,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           : Colors.blueAccent;
                       return Dismissible(
                         key: Key(rec.id),
-                        direction: DismissDirection.endToStart,
-
+                        direction: DismissDirection
+                            .endToStart, // Swipe from right to left
                         // Swipe-to-delete background
                         background: Container(
                           alignment: Alignment.centerRight,
@@ -341,8 +341,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // Delete from Hive
                         onDismissed: (direction) {
-                          // Smazání z databáze Hive
-                          box.deleteAt(recordings.length - 1 - index);
+                          // Get the key of the record we want to delete
+                          final keyToDelete = box.keyAt(
+                            box.values.toList().indexOf(rec),
+                          );
+                          box.delete(keyToDelete);
                         },
 
                         // Note tile
