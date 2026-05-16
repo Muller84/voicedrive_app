@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -10,10 +11,24 @@ class AudioService {
   // Play a saved recording
   Future<void> playRecording(String filePath) async {
     try {
-      // On Android - play directly from a file on the device
+      // No file path — skip
+      if (filePath.isEmpty) {
+        debugPrint("Přehrávání: žádný soubor.");
+        return;
+      }
+
+      // On Android/iOS — check if file actually exists
+      if (!kIsWeb) {
+        final file = File(filePath);
+        if (!await file.exists()) {
+          debugPrint("Soubor neexistuje: $filePath");
+          return;
+        }
+      }
+
       await _audioPlayer.play(DeviceFileSource(filePath));
     } catch (e) {
-      print("Chyba při přehrávání: $e");
+      debugPrint("Chyba při přehrávání: $e");
     }
   }
 
@@ -36,7 +51,6 @@ class AudioService {
         // Web - path_provider DOES NOT EXIST - need to skip
         if (!kIsWeb) {
           final directory = await getApplicationDocumentsDirectory();
-          // Create a path to the .m4a file on the phone
           filePath =
               '${directory.path}/rec_${DateTime.now().millisecondsSinceEpoch}.m4a';
         }
@@ -51,8 +65,6 @@ class AudioService {
 
         debugPrint("Startuji rekordér do cesty: $filePath");
 
-        // Logic for web
-        // On the website, the path is ignored - the plugin creates a Blob URL
         await _audioRecorder.start(config, path: filePath);
         debugPrint("Rekordér úspěšně spuštěn.");
       } else {
@@ -66,20 +78,16 @@ class AudioService {
   // Stop recording
   Future<String?> stopRecording() async {
     try {
-      // Android - returns the path to the .m4a file
-      // Web - Blob URL
       final path = await _audioRecorder.stop();
-      print("Recording stopped. Saved at: $path");
+      debugPrint("Recording stopped. Saved at: $path");
       return path;
     } catch (e) {
-      print("Error stopping record: $e");
+      debugPrint("Error stopping record: $e");
       return null;
     }
   }
 
   // Resource release
-  // Ends recording and closes native audio channels.
-  // Frees the player from memory usage.
   void dispose() {
     _audioRecorder.dispose();
     _audioPlayer.dispose();

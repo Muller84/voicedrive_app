@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter/foundation.dart';
 
 class SpeechService {
   final SpeechToText _speech = SpeechToText();
   bool _isAvailable = false;
+  bool _shouldBeListening = false; // sleduje jestli má STT běžet
+  Function(String)? _lastCallback; // uloží callback pro restart
 
   Future<bool> initSpeech() async {
     try {
@@ -12,12 +13,21 @@ class SpeechService {
         onError: (val) => debugPrint(
           '### STT ERROR: ${val.errorMsg} | permanent: ${val.permanent}',
         ),
-        onStatus: (val) => debugPrint('### STT STATUS: $val'),
-        debugLogging: true, // ← přidej toto!
+        onStatus: (val) {
+          debugPrint('### STT STATUS: $val');
+          // AUTO-RESTART: když se STT zastaví ale chci naslouchat
+          if ((val == 'notListening' || val == 'done') && _shouldBeListening) {
+            debugPrint('### STT AUTO-RESTART');
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (_shouldBeListening && _lastCallback != null) {
+                _startListeningInternal(_lastCallback!);
+              }
+            });
+          }
+        },
+        debugLogging: true,
       );
-
       debugPrint('### STT AVAILABLE: $_isAvailable');
-
       if (_isAvailable) {
         final locales = await _speech.locales();
         debugPrint('### STT LOCALES COUNT: ${locales.length}');
@@ -25,49 +35,31 @@ class SpeechService {
     } catch (e) {
       debugPrint('### STT INIT EXCEPTION: $e');
     }
-
     return _isAvailable;
   }
 
   Future<String> _getBestLocale() async {
-    final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
-    final locales = await _speech.locales();
-
-    debugPrint('System locale: ${systemLocale.languageCode}');
-    debugPrint(
-      'Available STT locales: ${locales.map((l) => l.localeId).toList()}',
-    );
-
-    // Normalizace: porovnáváme jen language code (cs, en...)
-    // a ignorujeme podtržítko vs pomlčka rozdíly
-    final langCode = systemLocale.languageCode.toLowerCase();
-
-    var match = locales.where(
-      (l) => l.localeId.toLowerCase().replaceAll('-', '_').startsWith(langCode),
-    );
-
-    final selected = match.isNotEmpty ? match.first.localeId : 'en_GB';
-    debugPrint('Using STT locale: $selected');
-    return selected;
+    return 'en_GB';
   }
 
-  Future<void> startListening(
-    Function(String) onResult, {
-    String? localeId,
-  }) async {
+  Future<void> startListening(Function(String) onResult) async {
+    _shouldBeListening = true; // nastav flag!
+    _lastCallback = onResult; // ulož callback!
+    await _startListeningInternal(onResult);
+  }
+
+  Future<void> _startListeningInternal(Function(String) onResult) async {
     if (!_isAvailable) {
-      debugPrint('STT not available, trying re-init...');
       await initSpeech();
       if (!_isAvailable) return;
     }
 
-    // Zastav případné předchozí naslouchání
     if (_speech.isListening) {
       await _speech.stop();
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    final finalLocale = localeId ?? await _getBestLocale();
+    final finalLocale = await _getBestLocale();
 
     await _speech.listen(
       onResult: (val) {
@@ -79,16 +71,16 @@ class SpeechService {
       localeId: finalLocale,
       listenOptions: SpeechListenOptions(
         partialResults: true,
-        // dictation nefunguje spolehlivě na Androidu
-        // Použiji confirmation nebo deviceDefault
-        listenMode: kIsWeb ? ListenMode.dictation : ListenMode.confirmation,
-        cancelOnError: true,
+        listenMode: ListenMode.dictation,
+        cancelOnError: false,
         autoPunctuation: true,
       ),
     );
   }
 
   Future<void> stopListening() async {
+    _shouldBeListening = false; // zastav auto-restart
+    _lastCallback = null;
     await _speech.stop();
   }
 

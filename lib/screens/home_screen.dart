@@ -16,68 +16,41 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // SERVICES
-  final AudioService _audioService = AudioService();
-  final SpeechService _speechService = SpeechService();
+  final AudioService _audioService = AudioService(); // Audio recoreder service
+  final SpeechService _speechService =
+      SpeechService(); // Speech-to-text service
 
   // UI STATE VARIABLES
-  bool _isRecording = false;
-  bool _isTranscribing = false; // NEW: separate state for transcribing phase
-  bool _sortDescending = true;
+  bool _isRecording = false; // is recording in progress?
+  bool _isTranscribing = false; // is speech to text in progress?
+  bool _sortDescending = true; // sort the notes list
 
+  // Text from transcription
   String _transcriptionText = "Tap the mic to start recording";
-  String _selectedLocale = 'cs-CZ';
 
   @override
   void initState() {
     super.initState();
-    _initSpeech();
+    _initSpeech(); // iniialization STT
   }
 
+  /// Speech-to-text initialization
   void _initSpeech() async {
-    await _speechService.initSpeech();
+    bool available = await _speechService.initSpeech();
+    if (available) {}
   }
 
   @override
   void dispose() {
-    _audioService.dispose();
+    _audioService.dispose(); // End of audio recorder
     super.dispose();
-  }
-
-  // --- LANGUAGE TOGGLE CHIP (CZ / EN) ---
-  Widget _languageChip(String label, String code) {
-    bool isSelected = _selectedLocale == code;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedLocale = code),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.blueAccent.withValues(alpha: 0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? Colors.blueAccent : Colors.white10,
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white24,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
+      // Main background with gradient
       body: Container(
         padding: const EdgeInsets.all(12),
         decoration: const BoxDecoration(
@@ -87,18 +60,22 @@ class _HomeScreenState extends State<HomeScreen> {
             colors: [Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
           ),
         ),
+
+        // LayoutBuilder - desktop/phone
         child: LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth > 600) {
+              // DESKTOP LAYOUT
               return Row(
                 children: [
                   Expanded(
                     flex: 4,
                     child: _buildPanel(
                       accentColor: Colors.blueAccent,
-                      child: _buildNotesList(),
+                      child: _buildNotesList(), // left side
                     ),
                   ),
+
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 3,
@@ -106,34 +83,35 @@ class _HomeScreenState extends State<HomeScreen> {
                       accentColor: _isRecording
                           ? Colors.redAccent
                           : Colors.purpleAccent,
-                      child: _buildRecordingSection(),
+                      child: _buildRecordingSection(), // right side
                     ),
                   ),
                 ],
               );
             } else {
+              // Phone layout
               return Column(
                 children: [
                   const SizedBox(height: 20),
+                  // Language idikator
                   Padding(
                     padding: const EdgeInsets.only(right: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _languageChip("CZ", "cs-CZ"),
-                        const SizedBox(width: 8),
-                        _languageChip("EN", "en-US"),
-                      ],
+                    child: Text(
+                      "EN",
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
+
                   const SizedBox(height: 20),
-                  _buildLogoArea(),
+
+                  _buildLogoArea(), // Logo area
+
                   Expanded(flex: 2, child: _buildTranscriptionBox()),
                   Expanded(
                     flex: 3,
                     child: _buildPanel(child: _buildNotesList()),
                   ),
-                  _buildLargeMicButton(),
+                  _buildLargeMicButton(), // Button microphone
                 ],
               );
             }
@@ -143,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Panel with rounded
   Widget _buildPanel({
     required Widget child,
     Color accentColor = Colors.blueAccent,
@@ -160,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Logo and text status
   Widget _buildLogoArea() {
     return Column(
       children: [
@@ -190,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Box with text transcription
   Widget _buildTranscriptionBox() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -227,10 +208,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // List with notes (Hive)
   Widget _buildNotesList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Button for sorting
         Padding(
           padding: const EdgeInsets.fromLTRB(25, 20, 25, 15),
           child: Row(
@@ -257,6 +240,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+
+        // List
         Expanded(
           child: Container(
             margin: const EdgeInsets.fromLTRB(15, 0, 15, 15),
@@ -266,6 +251,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
+
+              // Hive listener
               child: ValueListenableBuilder(
                 valueListenable: Hive.box<Recording>('recordings').listenable(),
                 builder: (context, Box<Recording> box, _) {
@@ -278,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }
 
+                  // Sorting notes
                   List<Recording> recordings = box.values.toList();
                   recordings.sort(
                     (a, b) => _sortDescending
@@ -285,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : a.createdAt.compareTo(b.createdAt),
                   );
 
+                  // ListView notes
                   return ListView.builder(
                     itemCount: recordings.length,
                     itemBuilder: (context, index) {
@@ -297,6 +286,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Dismissible(
                         key: Key(rec.id),
                         direction: DismissDirection.endToStart,
+
+                        // Delete background
                         background: Container(
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
@@ -325,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // One note in list notes
   Widget _noteTile(String title, String tag, Color color, String filePath) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -351,34 +343,38 @@ class _HomeScreenState extends State<HomeScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(
-            Icons.play_circle_fill_rounded,
-            color: Colors.white54,
-          ),
-          onPressed: () => _audioService.playRecording(filePath),
-        ),
+        trailing: filePath.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(
+                  Icons.play_circle_fill_rounded,
+                  color: Colors.white54,
+                ),
+                onPressed: () => _audioService.playRecording(filePath),
+              ),
       ),
     );
   }
 
+  // Recording section – EN label, logo, transkripci and mic button
   Widget _buildRecordingSection() {
     return Stack(
       children: [
+        // LANGUAGE TOGGLE
         Positioned(
-          top: 15,
+          top: 40,
           right: 15,
-          child: Row(
-            children: [
-              _languageChip("CZ", "cs-CZ"),
-              const SizedBox(width: 6),
-              _languageChip("EN", "en-US"),
-            ],
+          child: Text(
+            "EN",
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ),
-        Center(
+
+        // Main content aligned bottom
+        Align(
+          alignment: Alignment.bottomCenter,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               _buildLogoArea(),
               const SizedBox(height: 10),
@@ -403,96 +399,44 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: isDisabled
             ? null
             : () async {
-                // ── STOP RECORDING ──────────────────────────────────────────
                 if (_isRecording) {
-                  if (kIsWeb) {
-                    // WEB: zastav STT, ulož jen text (žádné audio)
-                    setState(() => _isRecording = false);
-                    await _speechService.stopListening();
+                  // STOP RECORDING
+                  setState(() => _isRecording = false);
+                  await _speechService.stopListening();
 
-                    final box = Hive.box<Recording>('recordings');
-                    await box.add(
-                      Recording(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        filePath: '',
-                        transcript: _transcriptionText == "Recording..."
-                            ? ""
-                            : _transcriptionText,
-                        createdAt: DateTime.now(),
-                        durationSeconds: 0.0,
-                        category: "",
-                      ),
-                    );
+                  final box = Hive.box<Recording>('recordings');
+                  await box.add(
+                    Recording(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      filePath: '',
+                      transcript: _transcriptionText == "Recording..."
+                          ? ""
+                          : _transcriptionText,
+                      createdAt: DateTime.now(),
+                      durationSeconds: 0.0,
+                      category: "",
+                    ),
+                  );
 
-                    setState(
-                      () =>
-                          _transcriptionText = "Tap the mic to start recording",
-                    );
-                  } else {
-                    // ANDROID/iOS: Možnost B
-                    setState(() {
-                      _isRecording = false;
-                      _isTranscribing = true;
-                      _transcriptionText = "Speak now to transcribe...";
-                    });
-
-                    final path = await _audioService.stopRecording();
-                    await Future.delayed(const Duration(milliseconds: 300));
-
-                    await _speechService.startListening((resultText) {
-                      if (mounted && resultText.isNotEmpty) {
-                        setState(() => _transcriptionText = resultText);
-                      }
-                    }, localeId: _selectedLocale);
-
-                    await Future.delayed(const Duration(seconds: 7));
-                    await _speechService.stopListening();
-
-                    if (path != null) {
-                      final box = Hive.box<Recording>('recordings');
-                      await box.add(
-                        Recording(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          filePath: path,
-                          transcript:
-                              _transcriptionText == "Speak now to transcribe..."
-                              ? ""
-                              : _transcriptionText,
-                          createdAt: DateTime.now(),
-                          durationSeconds: 0.0,
-                          category: "",
-                        ),
-                      );
-                    }
-                    if (mounted) {
-                      setState(() {
-                        _isTranscribing = false;
-                        _transcriptionText = "Tap the mic to start recording";
-                      });
-                    }
-                  }
-                }
-                // ── START RECORDING ──────────────────────────────────────
-                else {
+                  setState(
+                    () => _transcriptionText = "Tap the mic to start recording",
+                  );
+                } else {
+                  // ── START RECORDING ──────────────────────────────────────
                   setState(() {
                     _isRecording = true;
                     _transcriptionText = "Recording...";
                   });
 
-                  if (kIsWeb) {
-                    // WEB: STT a audio paralelně nejde — použij jen STT
-                    await _speechService.startListening((resultText) {
-                      if (mounted && resultText.isNotEmpty) {
-                        setState(() => _transcriptionText = resultText);
-                      }
-                    }, localeId: _selectedLocale);
-                  } else {
-                    // ANDROID/iOS: pouze audio recorder
-                    await _audioService.startRecording();
-                  }
+                  await _speechService.startListening((resultText) {
+                    if (mounted && resultText.isNotEmpty) {
+                      setState(() => _transcriptionText = resultText);
+                    }
+                  });
                 }
               },
 
+        // Design for button
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: 80,
